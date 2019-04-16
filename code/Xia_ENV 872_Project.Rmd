@@ -1,0 +1,552 @@
+---
+title: "2017, 2018 Ozone in North Carolina"
+author: "Qianyi Xia"
+fontsize: 12pt
+output:
+  pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    number_sections: yes
+  html_document:
+    df_print: paged
+mainfont: Times New Roman
+geometry: margin=2.54cm
+subtitle: https://github.com/xqy1012/ENV872project
+abstract: 'Experimental overview. This section should be no longer than 250 words. '
+---
+
+<Information in these brackets are used for annotating the RMarkdown file. They will not appear in the final version of the PDF document>
+
+\newpage
+\tableofcontents 
+\newpage
+\listoftables 
+\newpage
+\listoffigures 
+\newpage
+
+<Setup the global options for the R chunks in your document>
+
+<set up autoreferencing for figures and tables in your document>
+
+```{r setup, include=FALSE}
+# Set your working directory
+EPA_Ozone_2017.data <- read.csv("../Raw Data/EPAair_O3_NC2017_raw.csv")
+EPA_Ozone_2018.data <- read.csv("../Raw Data/EPAair_O3_NC2018_raw.csv")
+# Load your packages
+library(tidyverse)
+library(dplyr)
+library(viridis)
+library(lubridate)
+library('knitr')
+library(ggpubr)
+library(ggplot2)
+library(gridExtra)
+library(sf)
+library(leaflet)
+library(mapview)
+library(trend)
+library(GGally)
+library(ggplot2)
+# Set your ggplot theme
+QYtheme<- theme_classic(base_size = 14)+
+  theme(axis.text = element_text(color = 'black'),
+        legend.position = "right")
+
+theme_set(QYtheme)
+```
+
+
+# Research Question and Rationale
+\begin{itemize}
+\item[]      According to American Lung Association, the 2018 "State of the Air" report reveals that unhealthful levels of pollution put the citizens at risk.  Compare to 2017 repost, North Carolina Ozone Pollution worsened in 2018 compare to 2017 because there are more unhealthy days of high ozone in 2018's year report, especially in some cities. The report indicated that more work needs to be done to protect the health of residents from harms of ozone pollution. However, the EPA website showed that in Charlotte, NC, the number of days reaching unhealthy for sensitive groups for ozone pollution has been continue decreasing to 2017. There is no analysis report for ozone pollution in 2018 from EPA yet. Therefore, the interest for this project is to verify the accuracy of the news report by American Lung Association and analyze the ozone pollution in 2017 and 2018 in North Carolina.  
+\item[]     It is important to study ozone because human ozone exposure may result in adverse health effects including reduced lung function, respiratory symptoms, asthma, and other premature mortality from respiratory causes. For the nature, ozone damages vegetation, decreasing crop yields, and even may alter ecosystem structure. Ozone is also a greenhouse gas that contribute to global warming.  
+\item[]      There will be three main research questions for the report: 1. Does year 2018 has a worsened ozone pollution than 2017? 2. Are there any trend /fluctuation of ozone pollution among different months within a year? Is it true in this data that ozone level is higher when it is hot, dry and sunny in the summer? Does the trend similar in year 2017 and year 2018? 3. Does Ozone pollution level related to population size/ household income/ population density of a county? I will use the raw data that downloaded from EPA our door air quality dataset for 2017 and 2018, combining with demographic data obtained from United States Census Bureau website.
+\end{itemize}
+
+<Paragraph detailing the rationale for your analysis. What is the significant application and/or interest in this topic? Connect to environmental topic(s)/challenge(s).>
+
+<Paragraph detailing your research question(s) and goals. What do you want to find out? Include a sentence (or a few) on the dataset you are using to answer this question - just enough to give your reader an idea of where you are going with the analysis.>
+
+\newpage
+
+# Dataset Information
+
+<Information on how the dataset for this analysis were collected, the data contained in the dataset, and any important pieces of information that are relevant to your analyses. This section should contain much of same information as the README file for the dataset but formatted in a way that is more narrative.>
+
+<Add a table that summarizes your data structure. This table can be made in markdown text or inserted as a `kable` function in an R chunk. If the latter, do not include the code used to generate your table.>
+
+\newpage
+
+# Exploratory Data Analysis and Wrangling
+<Include R chunks for 5+ lines of summary code (display code and output), 3+ exploratory graphs (display graphs only), and any wrangling you do to your dataset(s).> 
+
+<Include text sections to accompany these R chunks to explain the reasoning behind your workflow, and the rationale for your approach.>
+First, display the data summary to get information of the data on: the dimension of data, how many different counties/ Ozone monitoring sites are there in North Carolina, where does the county located (e.g. Raleigh, Charlotte, etc.), which columns of the raw data are useful in this report analysis, filter the useful column and save as new files. Also check the format of concentration, AQI, and date, check on if these value needs reformat to numeric or dates. 
+Combine the 2017, 2018 data together and save in another file. 
+
+```{r summary code}
+dim(EPA_Ozone_2017.data)
+colnames(EPA_Ozone_2017.data)
+summary(EPA_Ozone_2017.data$Site.Name)
+summary(EPA_Ozone_2017.data$COUNTY)
+class(EPA_Ozone_2017.data$Daily.Max.8.hour.Ozone.Concentration)
+class(EPA_Ozone_2017.data$DAILY_AQI_VALUE)
+class(EPA_Ozone_2017.data$Date)
+```
+
+```{r,echo = FALSE}
+EPA_Ozone_2017.data$Date <-as.Date(EPA_Ozone_2017.data$Date, format = "%m/%d/%y")
+EPA_Ozone_2018.data$Date <-as.Date(EPA_Ozone_2018.data$Date, format = "%m/%d/%y")
+
+EPA_Ozone_2017.data.Processed <- EPA_Ozone_2017.data %>% 
+  select(Date, Daily.Max.8.hour.Ozone.Concentration,
+         UNITS,DAILY_AQI_VALUE,Site.Name,COUNTY,SITE_LATITUDE, SITE_LONGITUDE) %>% 
+    mutate(year = year(Date)) %>% 
+  mutate(month = month(Date)) %>% 
+  mutate(day = day(Date))
+
+EPA_Ozone_2018.data.Processed <- EPA_Ozone_2018.data %>% 
+  select(Date, Daily.Max.8.hour.Ozone.Concentration,
+         UNITS,DAILY_AQI_VALUE,Site.Name,COUNTY,SITE_LATITUDE, SITE_LONGITUDE) %>% 
+    mutate(year = year(Date)) %>% 
+  mutate(month = month(Date)) %>% 
+  mutate(day = day(Date))
+
+write.csv(EPA_Ozone_2017.data.Processed, row.names = F, 
+          file = "../Processed data/EPA_Ozone_2017.data.Processed.csv")
+write.csv(EPA_Ozone_2018.data.Processed, row.names = F, 
+          file = "../Processed data/EPA_Ozone_2018.data.Processed.csv")
+
+EPA_totalOzone.data <- rbind(EPA_Ozone_2017.data.Processed,
+                             EPA_Ozone_2018.data.Processed)
+EPA_totalOzone.data$Date <-as.Date(EPA_totalOzone.data$Date, format = "%m/%d/%y")
+EPA_totalOzone.data.processed <- EPA_totalOzone.data %>% 
+  mutate(year = year(Date)) %>% 
+  mutate(month = month(Date)) %>% 
+  mutate(day = day(Date))
+
+write.csv(EPA_totalOzone.data, row.names = F, 
+          file = "../Processed data/EPA_totalOzone.data.processed.csv")
+
+#group by year/ sites
+OzoneSummary_ByYearSites <-
+  EPA_totalOzone.data.processed %>% 
+  group_by(year, COUNTY) %>% 
+  na.omit() %>% 
+  summarise(MeanOzoneAQI = mean(DAILY_AQI_VALUE),
+            MeanOzoneConc =  mean(Daily.Max.8.hour.Ozone.Concentration),
+            Units = 'ppm',
+            minOzoneAQI = min(DAILY_AQI_VALUE),
+            maxOzoneAQI = max(DAILY_AQI_VALUE))
+
+write.csv(OzoneSummary_ByYearSites, row.names = F, 
+          file = "../Processed data/OzoneSummary_ByYearSites.csv")
+
+
+
+```
+\pagebreak
+The summary table include the information of ozone mean, min, max AQI, and mean concentration grouped by year and counties.
+```{r,echo = FALSE}
+knitr::kable(OzoneSummary_ByYearSites,
+             caption = "Summary of Ozone AQI/Concentration in year 2017 and 2018 by counties")
+```
+
+\pagebreak
+\begin{itemize}
+\item[]   Then for exploratory graphs, normality is visualized first by QQ norm plots in Figure 1.The sample size is larger than 5,000, so Kolmogorov-Smirnov test is applied together to test normality for ozone daily AQI value. The result shows that both original data and log-transformed data are not normally distributed. \
+\item[] Correlation between AQI and Ozone 8-hour concentration is also test with spearman correlation and plotted in Figure 2. In the raw data, there are both AQI and Ozone 8-hour max concentrations, the reason for correlation test is to make sure if using AQI is appropriate to represent Ozone pollution level. The correlation figure shows that there is a correlation coefficient of 1.00 between these two variables, so only AQI will be used in later analysis.   \item[] Figure 3 displays a monthly boxplot for year 2017 and 2018, February and September have higher ozone AQI in 2017, it is hard to identify other obvious differences only from this figure. \
+\item[] Figure 4 shows a LOESS trend in 2017 and 2018, it provide a first impression on the potential seasonal trend before conducting statistical analysis in the next section. \
+\item[] Figure 5 shows the density function and correlation among Mean Ozone AQI by county, income, population, and population density. There is a correlation of 0.64 between population density and income. But I will still conduct a mixed effect generalized linear model with the data.
+\item[] There is also a map generated to show different location of the counties, how they distributed in NC.
+\end{itemize}
+
+
+```{r test normal,echo = FALSE, include = FALSE ,warning = FALSE, message=FALSE}
+#Test for normality.
+ks.test(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE,pnorm)
+ks.test(log(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE),pnorm)
+ks.test(EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE,pnorm)
+ks.test(log(EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE),pnorm)
+```
+
+```{r exploration 1,echo = FALSE, include = TRUE ,warning = FALSE, message=FALSE, fig.cap= "QQ plots for 2017 and 2018 with/without log transform"}
+p1<-ggplot(EPA_Ozone_2017.data.Processed, aes(sample = DAILY_AQI_VALUE))+
+  stat_qq()+
+  stat_qq_line()+
+  ggtitle("2017 Ozone")+
+  annotate("text", x = -2, y = 90, label = "p<0.001",color = 'red')
+
+p2<-ggplot(EPA_Ozone_2017.data.Processed, aes(sample = log(DAILY_AQI_VALUE)))+
+  stat_qq()+
+  stat_qq_line()+
+  ggtitle("2017 log-Ozone")+
+  annotate("text", x = -2, y = 4, label = "p<0.001",color = 'red')
+p3<-ggplot(EPA_Ozone_2018.data.Processed, aes(sample = DAILY_AQI_VALUE))+
+  stat_qq()+
+  stat_qq_line()+
+  ggtitle("2018 Ozone")+
+  annotate("text", x = -2, y = 90, label = "p<0.001",color = 'red')
+p4<-ggplot(EPA_Ozone_2018.data.Processed, aes(sample = log(DAILY_AQI_VALUE)))+
+  stat_qq()+
+  stat_qq_line()+
+  ggtitle("2018 log-Ozone")+
+  annotate("text", x = -2, y = 4, label = "p<0.001",color = 'red')
+
+grid.arrange(p1, p2,p3,p4,nrow = 2)
+```
+
+```{r test correlation,echo = FALSE, include = FALSE ,warning = FALSE, message=FALSE}
+library(corrplot)
+cor.test(EPA_totalOzone.data.processed$Daily.Max.8.hour.Ozone.Concentration,
+         EPA_totalOzone.data.processed$DAILY_AQI_VALUE, method = "spearman")
+
+cor <- cor(EPA_totalOzone.data.processed$Daily.Max.8.hour.Ozone.Concentration,
+         EPA_totalOzone.data.processed$DAILY_AQI_VALUE, method = "s")
+```
+
+```{r exploration 2, result = 'hide',echo = FALSE,warning = FALSE, message=FALSE, fig.cap= "Correlation Between AQI and 8-hour Max Ozone Concentration"}
+
+ggplot(EPA_totalOzone.data.processed, aes(EPA_totalOzone.data.processed$Daily.Max.8.hour.Ozone.Concentration,
+         EPA_totalOzone.data.processed$DAILY_AQI_VALUE))+
+  geom_point()+
+  labs(x=expression(" Ozone Concentration 8-hour max (ppm)"), y=expression("Ozone Daily AQI Value"))+
+  ggtitle("Spearman Correlation Between AQI and 8-hour Max Ozone Concentration")+
+  geom_smooth()+
+  annotate("text", x = 0.02, y = 80, label = "p<0.001, cor = 1.00", color = 'red', size=6)
+  
+  
+
+```
+
+```{r exploration 3, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "Monthly Box Plot of 2017 and 2018 Ozone AQI"}
+ggplot(EPA_totalOzone.data.processed, aes(x=as.factor(month), y=DAILY_AQI_VALUE,
+                                          color = as.factor(year),
+                                          group = interaction(as.factor(year), month))) + 
+  geom_boxplot(outlier.shape = NA)+
+  labs(x= expression("Month"), y= expression(paste('Ozone Daily AQI Value')), color= 'Year')+
+  scale_color_manual(values=c("#E69F00", "#56B4E9"))
+
+
+```
+
+```{r exploration 5, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "Density Function and correlation among variables for GLM"}
+LG <- read.csv("../Processed data/OzoneSummary1.csv")
+FLG <- LG %>% 
+  select(MeanOzoneAQI, Population, Income, Density) 
+FLG$Population <-  as.numeric(FLG$Population)
+FLG$Income <-  as.numeric(FLG$Income)
+FLG$Density <-  as.numeric(FLG$Density)
+
+ggpairs(FLG)
+```
+
+```{r exploration 4, include=FALSE}
+#can only knit as html
+# Ozone_avg <-
+#   EPA_totalOzone.data.processed %>% 
+#   group_by(year, COUNTY, SITE_LATITUDE, SITE_LONGITUDE) %>% 
+#   na.omit() %>% 
+#   summarise(MeanOzoneAQI = mean(DAILY_AQI_VALUE),
+#             MeanOzoneConc =  mean(Daily.Max.8.hour.Ozone.Concentration),
+#             Units = 'ppm',
+#             minOzoneAQI = min(DAILY_AQI_VALUE),
+#             maxOzoneAQI = max(DAILY_AQI_VALUE))
+# 
+# Ozone_avg_sf <-st_as_sf(Ozone_avg, 
+# coords = c('SITE_LONGITUDE','SITE_LATITUDE'), crs = 4326)
+# mapview(Ozone_avg_sf['MeanOzoneAQI'])
+# mapview(Ozone_avg_sf)
+```
+
+```{r,exploration 5, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2017 and 2018 ozone AQI change through out year"}
+Ozone_2017 <- ggplot(EPA_Ozone_2017.data.Processed, aes(x= Date, y = DAILY_AQI_VALUE))+
+    geom_point( size = 0.6)+
+  geom_smooth(alpha=0.6)+
+  scale_x_date(limits = as.Date(c("2017-01-01", "2017-12-31")),
+                date_breaks = "1 months", date_labels = "%Y-%m")+
+    scale_y_continuous(breaks = c(25, 50, 75,100))+
+  labs(x= expression("Date"), y= expression('Ozone AQI Value'))+
+  theme(axis.text.x=element_text(angle = 45, hjust = 1))
+
+Ozone_2018 <- ggplot(EPA_Ozone_2018.data.Processed, aes(x= Date, y = DAILY_AQI_VALUE))+
+  geom_point( size = 0.6)+
+  geom_smooth(alpha=0.6)+
+  scale_x_date(limits = as.Date(c("2018-01-01", "2018-12-31")),
+                date_breaks = "1 months", date_labels = "%Y-%m")+
+  scale_y_continuous(breaks = c(25, 50, 75,100))+
+  labs(x= expression("Date"), y= expression('Ozone AQI Value'))+
+  theme(axis.text.x=element_text(angle = 45, hjust = 1))
+
+grid.arrange(Ozone_2017, Ozone_2018, nrow = 2)
+
+
+```
+
+\newpage
+
+# Analysis
+<Include R chunks for 3+ statistical tests (display code and output) and 3+ final visualization graphs (display graphs only).>
+
+<Include text sections to accompany these R chunks to explain the reasoning behind your workflow, rationale for your approach, and the justification of meeting or failing to meet assumptions of tests.>
+```{r, include=FALSE}
+month_1_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 1)
+month_1_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 1)
+month_2_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 2)
+month_2_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 2)
+month_3_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 3)
+month_3_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 3)
+month_4_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 4)
+month_4_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 4)
+month_5_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 5)
+month_5_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 5)
+month_6_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 6)
+month_6_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 6)
+
+month_7_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 7)
+month_7_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 7)
+month_8_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 8)
+month_8_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 8)
+month_9_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 9)
+month_9_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 9)
+month_10_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 10)
+month_10_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 10)
+month_11_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 11)
+month_11_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 11)
+month_12_2017 <-EPA_Ozone_2017.data.Processed %>% 
+  filter(month == 12)
+month_12_2018 <-EPA_Ozone_2018.data.Processed %>% 
+  filter(month == 12)
+```
+
+\begin{itemize}
+\item[] First analysis is the Wilcoxon test to test if ozone AQI in 2017 is lower than 2018. Wilcoxon test is conducted since the data are non-parametric data, which means not normally distributed. T-test or ANOVA test cannot be used here. Both the difference for yearly mean and monthly difference are tested. One interesting finding before conducting the test is that the 2017 AQI mean is actually higher than the 2018 AQI, so the null hypothesis is adjusted as follow:  
+\item[]H0: 2017 and 2018 mean ozone AQI are identical.  \
+\item[]Ha: 2017 has a higher mean ozone AQI than 2018.  \
+\item[]From the result and the visualization figures we see that, the 2017 has a significantly lower mean AQI than 2018 (p-value <0.001). Among the 12 months, February (p-value <0.001), May (p-value <0.001), August (p-value <0.001), September (p-value <0.001), October (p-value = 0.04), November (p-value <0.001), December (p-value <0.001) also have higher mean ozone AQI than 2018.
+\item[]While in January, April, June, the p-value is 1, and the mean of AQI in 2018 in these month are higher than 2017.
+\end{itemize}
+
+
+```{r}
+#ANOVA Test Assumption
+#Previous tested for normality not met
+ks.test(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE,pnorm)
+ks.test(log(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE),pnorm)
+ks.test(EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE,pnorm)
+ks.test(log(EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE),pnorm)
+#test for homogenecity of variance met
+class(EPA_totalOzone.data.processed$year)
+EPA_totalOzone.data.processed$year <- as.factor(EPA_totalOzone.data.processed$year)
+
+sd(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE)/
+  sd(EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE)
+
+# bartlett.test(EPA_totalOzone.data.processed$DAILY_AQI_VALUE~
+# EPA_totalOzone.data.processed$year, EPA_totalOzone.data.processed)
+     
+#T-test Assumption not met, data is not normally distributed. 
+#So I will conduct Mann-Whitney-Wilcoxon Test.
+
+mean(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE)
+mean(EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE)
+
+wilcox.test(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE,
+            EPA_Ozone_2018.data.Processed$DAILY_AQI_VALUE, alternative = "greater")
+
+
+wilcox.test(month_1_2017$DAILY_AQI_VALUE,month_1_2018$DAILY_AQI_VALUE,
+            alternative = "greater")
+wilcox.test(month_2_2017$DAILY_AQI_VALUE,month_2_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_3_2017$DAILY_AQI_VALUE,month_3_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_4_2017$DAILY_AQI_VALUE,month_4_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_5_2017$DAILY_AQI_VALUE,month_5_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_6_2017$DAILY_AQI_VALUE,month_6_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_7_2017$DAILY_AQI_VALUE,month_7_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_8_2017$DAILY_AQI_VALUE,month_8_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_9_2017$DAILY_AQI_VALUE,month_9_2018$DAILY_AQI_VALUE, 
+            alternative = "greater")
+wilcox.test(month_10_2017$DAILY_AQI_VALUE,
+            month_10_2018$DAILY_AQI_VALUE, alternative = "greater")
+wilcox.test(month_11_2017$DAILY_AQI_VALUE,
+            month_11_2018$DAILY_AQI_VALUE, alternative = "greater")
+wilcox.test(month_12_2017$DAILY_AQI_VALUE,
+            month_12_2018$DAILY_AQI_VALUE, alternative = "greater")
+
+```
+
+```{r,Final visualization 1, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2017 and 2018 ozone compare by year and by month"}
+t1<-ggplot(EPA_totalOzone.data.processed, aes(x = as.factor(year), y =DAILY_AQI_VALUE,
+                                              color = as.factor(year)))+
+   geom_boxplot(outlier.size = 1)+
+  geom_hline(aes(yintercept = median(EPA_Ozone_2017.data.Processed$DAILY_AQI_VALUE)), linetype="dashed", color = "red")+
+  labs(x= expression("Year"), y= expression(paste('Ozone Daily AQI Value')), color= 'Year')+
+  scale_color_manual(values=c("#E69F00", "#56B4E9"))+
+   annotate("text", x = 1.5, y = 100, label = "Higher AQI in 2017, p<0.0001", color = 'red', size=4)
+
+t2<-ggplot(EPA_totalOzone.data.processed, aes(x= month, y =DAILY_AQI_VALUE,
+                                              color = as.factor(year)))+
+  geom_point( size = 0.6)+
+  geom_smooth(alpha=0.6)+
+    scale_y_continuous(breaks = c(25, 50, 75,100,125))+
+    scale_x_continuous(breaks = c(1, 2,3,4,5,6,7,8,9,10,11,12))+
+    scale_color_manual(values=c("#E69F00", "#56B4E9"))+
+  labs(x= expression("Month"), y= expression('Ozone AQI Value'),color= 'Year')+
+  theme(axis.text.x=element_text( hjust = 1))
+
+grid.arrange(t1, t2, nrow = 2)
+
+```
+\pagebreak
+\begin{itemize}
+\item[]The second main analysis employs the Mann-kenndal test to determine whether there is a monotonic trend combining with Pettitt's test which find the shift point in the central tendency of time series. Weather is especially favorable for ozone formation when it is hot, dry and sunny. The two tests help to understand how ozone pollution level fluctuated through a yearly time period in 2017 and 2018.
+\item[]H0: There is no monotonic trend in the ozone AQI in 2017 (2018).  \
+\item[]Ha: There is a trend exist.\
+ In 2017, two significant change points are detected, one is on August 6th (p < 0.001), another is on October 7th (p<0.001). There is a significant positive trend from start of the year to August 6th (z = 4.65, p < 0.001), and a significant negative general trend from August 6th to the end of year (z = -4.24, p <0.001). There is also a suggestive slight positive trend from August 6th to October 7th (z = 1.80, p = 0.07), and a non-significant negative trend after October 7th (z =-1.16, p = 0.24).
+\item[]In 2018, there are three significant change points are detected, on July 29th (p < 0.001), on September 9th (p<0.001), and on October 7th (p = 0.002). There is a significant positive trend from start of the year to July 29th (z = 5.66, p < 0.001), and a significant negative general trend from July 29th to the end of year (z = -3.85, p <0.001). There is also a non-significant positive trend from July 29th to September 9th (z = 1.36, p = 0.17), a significant positive trend from September 9th to October 7th (p = 0.007), a significant negative trend after October 7th (z =- 2.28, p = 0.02).
+\item[]Both the result and the figure show that the trends of ozone level fluctuate are similar in 2017 and 2018. There are change points in summer/ fall in both years and the change point is on the exact same date on October 7th. And there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year).
+\end{itemize}
+```{r Mann-kendal test}
+#Mann-Kendall test for trend of Ozone in both 2017 and 2018.
+#group_by date
+Ozonebydate_2017 <- EPA_Ozone_2017.data.Processed %>% 
+   group_by(Date) %>% 
+  summarise(MeanOzoneAQI = mean(DAILY_AQI_VALUE))
+
+Ozonebydate_2018 <- EPA_Ozone_2018.data.Processed %>% 
+   group_by(Date) %>% 
+  summarise(MeanOzoneAQI = mean(DAILY_AQI_VALUE))
+#Non-normal data 2017:
+
+#Test for Change point
+pettitt.test(Ozonebydate_2017$MeanOzoneAQI)
+# 218: 2017-08-06
+
+# Run seperate Mann-Kendall for each change point: possitive trend
+  mk.test(Ozonebydate_2017$MeanOzoneAQI[1:218])
+  
+  #negative trend
+mk.test(Ozonebydate_2017$MeanOzoneAQI[218:364])
+#Another Change point at 280 : 2017-10-07
+pettitt.test(Ozonebydate_2017$MeanOzoneAQI[218:364]) 
+
+mk.test(Ozonebydate_2017$MeanOzoneAQI[218:280]) #no significant trend
+mk.test(Ozonebydate_2017$MeanOzoneAQI[281:364]) #no significant trend
+
+#anythird change point?
+pettitt.test(Ozonebydate_2017$MeanOzoneAQI[281:364]) #not significant
+
+
+#Non-normal data 2018:
+
+#Test for Change point
+pettitt.test(Ozonebydate_2018$MeanOzoneAQI)
+# 210: 2018-07-29
+
+# Run seperate Mann-Kendall for each change point: possitive trend
+  mk.test(Ozonebydate_2018$MeanOzoneAQI[1:210])
+  
+  #negative trend
+mk.test(Ozonebydate_2018$MeanOzoneAQI[210:343])
+#Another Change point at 252 : 2017-09-09
+pettitt.test(Ozonebydate_2018$MeanOzoneAQI[210:343]) 
+
+mk.test(Ozonebydate_2018$MeanOzoneAQI[210:252]) #no significant trend
+mk.test(Ozonebydate_2018$MeanOzoneAQI[252:343]) #no significant trend
+
+#anythird change point? 
+pettitt.test(Ozonebydate_2017$MeanOzoneAQI[252:343]) #At 280, 2018-10-07
+
+mk.test(Ozonebydate_2018$MeanOzoneAQI[252:280])
+mk.test(Ozonebydate_2018$MeanOzoneAQI[280:343])
+```
+\pagebreak
+
+```{r,Final visualization 2, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2017 ozone trend"}
+ggplot(Ozonebydate_2017, aes(x = Date, y = MeanOzoneAQI )) + 
+  geom_point(color = "#E69F00") +
+  scale_color_manual(values=c("#E69F00"))+
+  geom_vline(xintercept = as.Date('2017-08-06'),
+             color="#E69F00", lty=2)+ 
+     geom_text(aes(as.Date('2017-08-06'), label="2017-08-06", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
+  geom_vline(xintercept = as.Date('2017-10-07'),
+            color="#E69F00", lty=2)+
+   geom_text(aes(as.Date('2017-10-07'), label="2017-10-07", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
+labs(y= expression('Mean Ozone AQI from All Counties'), x= expression("Date in 2017"), color = '2017')
+```
+
+
+```{r,Final visualization 3, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2018 ozone trend"}
+ggplot(Ozonebydate_2018, aes(x = Date, y = MeanOzoneAQI )) + 
+  geom_point(color = "#56B4E9") +
+  scale_color_manual(values=c("#56B4E9"))+
+  geom_vline(xintercept = as.Date('2018-07-29'),
+             color="#56B4E9", lty=2)+ 
+    geom_text(aes(as.Date('2018-07-29'), label="2018-07-29", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
+  geom_vline(xintercept = as.Date('2018-09-09'),
+             color="#56B4E9", lty=2)+ 
+     geom_text(aes(as.Date('2018-09-09'), label="2018-09-09", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
+  geom_vline(xintercept = as.Date('2018-10-07'),
+            color="#56B4E9", lty=2)+
+   geom_text(aes(as.Date('2018-10-07'), label="2018-10-07", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
+labs(y= expression('Mean Ozone AQI from All Counties'), x= expression("Date in 2018"), color = '2018')
+
+
+```
+\pagebreak
+
+```{r GLM test}
+#Generalized linear model.
+LG <- read.csv("../Processed data/OzoneSummary1.csv")
+library(lme4)
+#Density =(population/square mile)
+#normaility -test : not normal
+shapiro.test(FLG$Population)
+shapiro.test(FLG$Income)
+shapiro.test(FLG$Density)
+#Counties as a mixed effect
+glm1 <- lm(data = FLG, MeanOzoneAQI ~Population + Income + Density )
+summary(glm1)
+step(glm1)
+```
+
+```{r,Final visualization 4, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= ""}
+
+```
+\newpage
+
+# Summary and Conclusions
+<Summarize your major findings from your analyses. What conclusions do you draw from your findings? Make sure to apply this to a broader application for the research question you have answered.>
+
+
+
