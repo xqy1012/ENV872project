@@ -1,5 +1,5 @@
 ---
-title: "2017, 2018 Ozone in North Carolina"
+title: "Does Ozone Pollution in 2018 Worsened in North Carolina?"
 author: "Qianyi Xia"
 fontsize: 12pt
 output:
@@ -12,7 +12,7 @@ output:
 mainfont: Times New Roman
 geometry: margin=2.54cm
 subtitle: https://github.com/xqy1012/ENV872project
-abstract: 'Experimental overview. This section should be no longer than 250 words. '
+abstract: 'There is an online news report arguing that in year 2018, the ozone air pollution has worsened compare to the status in 2017. However, this is not the truth. Analysis in this report will provide evidence on why this viewpoint is not accurate. Further, the report will investigate other information on ozone pollution situation in 2017 and 2018, including the yearly trend of ozone in summer and in winter, and the influence of population size on Ozone pollution level.' 
 ---
 
 <Information in these brackets are used for annotating the RMarkdown file. They will not appear in the final version of the PDF document>
@@ -95,7 +95,8 @@ class(EPA_Ozone_2017.data$DAILY_AQI_VALUE)
 class(EPA_Ozone_2017.data$Date)
 ```
 
-```{r,echo = FALSE}
+```{r,echo = TRUE}
+#Wranggling
 EPA_Ozone_2017.data$Date <-as.Date(EPA_Ozone_2017.data$Date, format = "%m/%d/%y")
 EPA_Ozone_2018.data$Date <-as.Date(EPA_Ozone_2018.data$Date, format = "%m/%d/%y")
 
@@ -156,7 +157,8 @@ knitr::kable(OzoneSummary_ByYearSites,
 \pagebreak
 \begin{itemize}
 \item[]   Then for exploratory graphs, normality is visualized first by QQ norm plots in Figure 1.The sample size is larger than 5,000, so Kolmogorov-Smirnov test is applied together to test normality for ozone daily AQI value. The result shows that both original data and log-transformed data are not normally distributed. \
-\item[] Correlation between AQI and Ozone 8-hour concentration is also test with spearman correlation and plotted in Figure 2. In the raw data, there are both AQI and Ozone 8-hour max concentrations, the reason for correlation test is to make sure if using AQI is appropriate to represent Ozone pollution level. The correlation figure shows that there is a correlation coefficient of 1.00 between these two variables, so only AQI will be used in later analysis.   \item[] Figure 3 displays a monthly boxplot for year 2017 and 2018, February and September have higher ozone AQI in 2017, it is hard to identify other obvious differences only from this figure. \
+\item[] Correlation between AQI and Ozone 8-hour concentration is also test with spearman correlation and plotted in Figure 2. In the raw data, there are both AQI and Ozone 8-hour max concentrations, the reason for correlation test is to make sure if using AQI is appropriate to represent Ozone pollution level. The correlation figure shows that there is a correlation coefficient of 1.00 between these two variables, so only AQI will be used in later analysis.   
+\item[] Figure 3 displays a monthly boxplot for year 2017 and 2018, February and September have higher ozone AQI in 2017, it is hard to identify other obvious differences only from this figure. \
 \item[] Figure 4 shows a LOESS trend in 2017 and 2018, it provide a first impression on the potential seasonal trend before conducting statistical analysis in the next section. \
 \item[] Figure 5 shows the density function and correlation among Mean Ozone AQI by county, income, population, and population density. There is a correlation of 0.64 between population density and income. But I will still conduct a mixed effect generalized linear model with the data.
 \item[] There is also a map generated to show different location of the counties, how they distributed in NC.
@@ -341,7 +343,7 @@ month_12_2017 <-EPA_Ozone_2017.data.Processed %>%
 month_12_2018 <-EPA_Ozone_2018.data.Processed %>% 
   filter(month == 12)
 ```
-## 4.1
+## Wilcoxon Test
 \begin{itemize}
 \item[] First analysis is the Wilcoxon test to test if ozone AQI in 2017 is lower than 2018. Wilcoxon test is conducted since the data are non-parametric data, which means not normally distributed. T-test or ANOVA test cannot be used here. Both the difference for yearly mean and monthly difference are tested. One interesting finding before conducting the test is that the 2017 AQI mean is actually higher than the 2018 AQI, so the null hypothesis is adjusted as follow:  
 \item[]H0: 2017 and 2018 mean ozone AQI are identical.  \
@@ -428,7 +430,9 @@ grid.arrange(t1, t2, nrow = 2)
 
 ```
 \pagebreak
-## 4.2
+
+## Mann-Kenndall & Pettitt's test
+
 \begin{itemize}
 \item[]The second main analysis employs the Mann-kenndal test to determine whether there is a monotonic trend combining with Pettitt's test which find the shift point in the central tendency of time series. Weather is especially favorable for ozone formation when it is hot, dry and sunny. The two tests help to understand how ozone pollution level fluctuated through a yearly time period in 2017 and 2018.
 \item[]H0: There is no monotonic trend in the ozone AQI in 2017 (2018).  \
@@ -491,7 +495,9 @@ pettitt.test(Ozonebydate_2017$MeanOzoneAQI[252:343]) #At 280, 2018-10-07
 mk.test(Ozonebydate_2018$MeanOzoneAQI[252:280])
 mk.test(Ozonebydate_2018$MeanOzoneAQI[280:343])
 ```
+
 \pagebreak
+
 
 ```{r,Final visualization 2, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2017 ozone trend"}
 ggplot(Ozonebydate_2017, aes(x = Date, y = MeanOzoneAQI )) + 
@@ -505,7 +511,10 @@ ggplot(Ozonebydate_2017, aes(x = Date, y = MeanOzoneAQI )) +
    geom_text(aes(as.Date('2017-10-07'), label="2017-10-07", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
 labs(y= expression('Mean Ozone AQI from All Counties'), x= expression("Date in 2017"), color = '2017')
 ```
+
+
 \pagebreak
+
 
 ```{r,Final visualization 3, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2018 ozone trend"}
 ggplot(Ozonebydate_2018, aes(x = Date, y = MeanOzoneAQI )) + 
@@ -524,8 +533,11 @@ labs(y= expression('Mean Ozone AQI from All Counties'), x= expression("Date in 2
 
 
 ```
+
 \pagebreak
-## 4.3
+
+## Generalized Linear Model
+
 \begin{itemize}
 \item[]The third analysis is the generalized linear model to test whether population, density, or income is correlated with Ozone AQI level. Random effect for county is included in the model.
 \item[]H0: There is no significant correlation for all the variables, all the coefficients are zero. 
@@ -587,6 +599,13 @@ ggplot(MLG, aes(x = Population, y = MeanOzoneAQI))+
 # Summary and Conclusions
 <Summarize your major findings from your analyses. What conclusions do you draw from your findings? Make sure to apply this to a broader application for the research question you have answered.>
 
-
+\begin{itemize}
+\item[]Based on the analysis above, we can conclude that: 
+\item[]1. 2018 does not have a worsened ozone pollution compare to 2017. And moreover, in February, May, August, September, October, November, December, there was a higher ozone concentration in most months in 2017 than 2018. Therefore, it is not accurate for American Lung Association to report a worsened ozone pollution in 2018. The implication we obtain from this is that, to become scientists, we should have critical thoughts on the news we see every day and confirm/deny the truth by ourselves will be interesting.
+\item[]2. There are trends patterns for Ozone AQI level within a yearly period both in 2017 and 2018. The patterns are similar in these two years where there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year). This result is consistent with the fact that weather may affect the ozone formation, and ozone pollution tends to be higher when it is hot, dry and sunny without much wind.
+\item[]3. Population size affects Ozone AQI level, population density or income does not affect Ozone AQI level. In our data, the association between Ozone AQI and population size is:   
+Mean Ozone AQI = 38.35 + 0.08 x Population  
+Therefore, in a city/community with a larger population size, the ozone pollution may be worse than a low population area. People who live in a large and sunny city should pay more attention to their ozone pollution.
+\end{itemize}
 
 
