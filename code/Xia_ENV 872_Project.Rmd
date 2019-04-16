@@ -260,7 +260,7 @@ ggpairs(FLG)
 # mapview(Ozone_avg_sf)
 ```
 
-```{r,exploration 5, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2017 and 2018 ozone AQI change through out year"}
+```{r,exploration 6, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2017 and 2018 ozone AQI change through out year"}
 Ozone_2017 <- ggplot(EPA_Ozone_2017.data.Processed, aes(x= Date, y = DAILY_AQI_VALUE))+
     geom_point( size = 0.6)+
   geom_smooth(alpha=0.6)+
@@ -341,7 +341,7 @@ month_12_2017 <-EPA_Ozone_2017.data.Processed %>%
 month_12_2018 <-EPA_Ozone_2018.data.Processed %>% 
   filter(month == 12)
 ```
-
+## 4.1
 \begin{itemize}
 \item[] First analysis is the Wilcoxon test to test if ozone AQI in 2017 is lower than 2018. Wilcoxon test is conducted since the data are non-parametric data, which means not normally distributed. T-test or ANOVA test cannot be used here. Both the difference for yearly mean and monthly difference are tested. One interesting finding before conducting the test is that the 2017 AQI mean is actually higher than the 2018 AQI, so the null hypothesis is adjusted as follow:  
 \item[]H0: 2017 and 2018 mean ozone AQI are identical.  \
@@ -428,6 +428,7 @@ grid.arrange(t1, t2, nrow = 2)
 
 ```
 \pagebreak
+## 4.2
 \begin{itemize}
 \item[]The second main analysis employs the Mann-kenndal test to determine whether there is a monotonic trend combining with Pettitt's test which find the shift point in the central tendency of time series. Weather is especially favorable for ozone formation when it is hot, dry and sunny. The two tests help to understand how ozone pollution level fluctuated through a yearly time period in 2017 and 2018.
 \item[]H0: There is no monotonic trend in the ozone AQI in 2017 (2018).  \
@@ -504,7 +505,7 @@ ggplot(Ozonebydate_2017, aes(x = Date, y = MeanOzoneAQI )) +
    geom_text(aes(as.Date('2017-10-07'), label="2017-10-07", y=70), colour="red", angle=90, vjust = -1, text=element_text(size=11))+
 labs(y= expression('Mean Ozone AQI from All Counties'), x= expression("Date in 2017"), color = '2017')
 ```
-
+\pagebreak
 
 ```{r,Final visualization 3, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "2018 ozone trend"}
 ggplot(Ozonebydate_2018, aes(x = Date, y = MeanOzoneAQI )) + 
@@ -524,6 +525,14 @@ labs(y= expression('Mean Ozone AQI from All Counties'), x= expression("Date in 2
 
 ```
 \pagebreak
+## 4.3
+\begin{itemize}
+\item[]The third analysis is the generalized linear model to test whether population, density, or income is correlated with Ozone AQI level. Random effect for county is included in the model.
+\item[]H0: There is no significant correlation for all the variables, all the coefficients are zero. 
+\item[]Ha: At least one variable is significant.
+\item[]After testing the data, I found out that only the mean AQI value (p-value = 0.73) passed the Shapiro-Wilk normality test. Other variables are not normally distributed. The initial model established included all the variables, and then based on the AIC score, best fit model is selected which is MeanOzoneAQI  ~ Population (P = 0.07). Due to a small sample size, a p value of 0.07 is considered to be suggestive significant. The diagnostic residual plot shows that the residuals are evenly distributed above and below the center, so there is no skew problem.
+\item[]From the result, our final model is: Mean Ozone AQI = 38.35 + 0.08 x Population. The intercept is 38.35, which means that when population is 0, there will be a mean AQI Ozone value of 38.35. And every single person increase in population will result in a 0.08 increase in the mean Ozone AQI.
+\end{itemize}
 
 ```{r GLM test}
 #Generalized linear model.
@@ -534,19 +543,50 @@ library(lme4)
 shapiro.test(FLG$Population)
 shapiro.test(FLG$Income)
 shapiro.test(FLG$Density)
+#Normal
+shapiro.test(FLG$MeanOzoneAQI)
+
 #Counties as a mixed effect
-glm1 <- lm(data = FLG, MeanOzoneAQI ~Population + Income + Density )
+MLG <- LG %>% 
+  select(MeanOzoneAQI, Population, Income, Density,COUNTY) 
+MLG$Population <-  as.numeric(FLG$Population)
+MLG$Income <-  as.numeric(FLG$Income)
+MLG$Density <-  as.numeric(FLG$Density)
+
+glm1 <- lmer(data = MLG, MeanOzoneAQI ~Population + Income + Density+(1|COUNTY) )
+glm2 <-lmer(data = MLG, MeanOzoneAQI ~Population + (1|COUNTY))
 summary(glm1)
-step(glm1)
+AIC(glm1)
+summary(glm2)
+AIC(glm2)
+
+
+
 ```
 
-```{r,Final visualization 4, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= ""}
+```{r,Final visualization 5, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "Residual Plot"}
+plot(glm2)
 
 ```
+
+
+
+```{r,Final visualization 4, echo = FALSE, warning = FALSE, message=FALSE, fig.cap= "Relationship Between Ozone AQI and Population"}
+
+ggplot(MLG, aes(x = Population, y = MeanOzoneAQI))+
+  geom_point(alpha=0.7, color = 'dodgerblue')+
+  geom_smooth (method = "lm", se = FALSE, color = 'darkolivegreen2')+
+  labs(y= expression('Mean Ozone AQI for Different Counties'), x= expression("Population"))+
+   annotate("text", x = 15, y = 45, label = "Mean Ozone AQI = 38.35 + 0.08 x Population", color = 'red', size=4)
+```
+
+  
+
 \newpage
 
 # Summary and Conclusions
 <Summarize your major findings from your analyses. What conclusions do you draw from your findings? Make sure to apply this to a broader application for the research question you have answered.>
+
 
 
 

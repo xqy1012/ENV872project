@@ -435,6 +435,7 @@ maxOzoneAQI\tabularnewline
 \item[]   Then for exploratory graphs, normality is visualized first by QQ norm plots in Figure 1.The sample size is larger than 5,000, so Kolmogorov-Smirnov test is applied together to test normality for ozone daily AQI value. The result shows that both original data and log-transformed data are not normally distributed. \
 \item[] Correlation between AQI and Ozone 8-hour concentration is also test with spearman correlation and plotted in Figure 2. In the raw data, there are both AQI and Ozone 8-hour max concentrations, the reason for correlation test is to make sure if using AQI is appropriate to represent Ozone pollution level. The correlation figure shows that there is a correlation coefficient of 1.00 between these two variables, so only AQI will be used in later analysis.   \item[] Figure 3 displays a monthly boxplot for year 2017 and 2018, February and September have higher ozone AQI in 2017, it is hard to identify other obvious differences only from this figure. \
 \item[] Figure 4 shows a LOESS trend in 2017 and 2018, it provide a first impression on the potential seasonal trend before conducting statistical analysis in the next section. \
+\item[] Figure 5 shows the density function and correlation among Mean Ozone AQI by county, income, population, and population density. There is a correlation of 0.64 between population density and income. But I will still conduct a mixed effect generalized linear model with the data.
 \item[] There is also a map generated to show different location of the counties, how they distributed in NC.
 \end{itemize}
 
@@ -459,6 +460,12 @@ maxOzoneAQI\tabularnewline
 \begin{figure}
 \centering
 \includegraphics{Xia_ENV_872_Project_files/figure-latex/exploration 5-1.pdf}
+\caption{Density Function and correlation among variables for GLM}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{Xia_ENV_872_Project_files/figure-latex/exploration 6-1.pdf}
 \caption{2017 and 2018 ozone AQI change through out year}
 \end{figure}
 
@@ -814,11 +821,17 @@ maxOzoneAQI\tabularnewline
 ## alternative hypothesis: true location shift is greater than 0
 \end{verbatim}
 
-\begin{figure}
-\centering
 \includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 1-1.pdf}
-\caption{2017 and 2018 ozone compare by year and by month}
-\end{figure}
+\pagebreak
+
+\begin{itemize}
+\item[]The second main analysis employs the Mann-kenndal test to determine whether there is a monotonic trend combining with Pettitt's test which find the shift point in the central tendency of time series. Weather is especially favorable for ozone formation when it is hot, dry and sunny. The two tests help to understand how ozone pollution level fluctuated through a yearly time period in 2017 and 2018.
+\item[]H0: There is no monotonic trend in the ozone AQI in 2017 (2018).  \
+\item[]Ha: There is a trend exist.\
+ In 2017, two significant change points are detected, one is on August 6th (p < 0.001), another is on October 7th (p<0.001). There is a significant positive trend from start of the year to August 6th (z = 4.65, p < 0.001), and a significant negative general trend from August 6th to the end of year (z = -4.24, p <0.001). There is also a suggestive slight positive trend from August 6th to October 7th (z = 1.80, p = 0.07), and a non-significant negative trend after October 7th (z =-1.16, p = 0.24).
+\item[]In 2018, there are three significant change points are detected, on July 29th (p < 0.001), on September 9th (p<0.001), and on October 7th (p = 0.002). There is a significant positive trend from start of the year to July 29th (z = 5.66, p < 0.001), and a significant negative general trend from July 29th to the end of year (z = -3.85, p <0.001). There is also a non-significant positive trend from July 29th to September 9th (z = 1.36, p = 0.17), a significant positive trend from September 9th to October 7th (p = 0.007), a significant negative trend after October 7th (z =- 2.28, p = 0.02).
+\item[]Both the result and the figure show that the trends of ozone level fluctuate are similar in 2017 and 2018. There are change points in summer/ fall in both years and the change point is on the exact same date on October 7th. And there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year).
+\end{itemize}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1136,19 +1149,228 @@ maxOzoneAQI\tabularnewline
 \end{verbatim}
 
 \pagebreak
-\includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 2-1.pdf}
 
 \begin{figure}
 \centering
-\includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 3-1.pdf}
-\caption{2018 ozone trend}
+\includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 2-1.pdf}
+\caption{2017 ozone trend}
 \end{figure}
+
+\includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 3-1.pdf}
+\pagebreak
+
+\begin{itemize}
+\item[]The third analysis is the generalized linear model to test whether population, density, or income is correlated with Ozone AQI level. Random effect for county is included in the model.
+\item[]H0: There is no significant correlation for all the variables, all the coefficients are zero. 
+\item[]Ha: At least one variable is significant.
+\item[]After testing the data, I found out that only the mean AQI value (p-value = 0.73) passed the Shapiro-Wilk normality test. Other variables are not normally distributed. The initial model established included all the variables, and then based on the AIC score, best fit model is selected which is MeanOzoneAQI  ~ Population (P = 0.07). Due to a small sample size, a p value of 0.07 is considered to be suggestive significant. The diagnostic residual plot shows that the residuals are evenly distributed above and below the center, so there is no skew problem.
+\item[]From the result, our final model is: Mean Ozone AQI = 38.35 + 0.08 x Population. The intercept is 38.35, which means that when population is 0, there will be a mean AQI Ozone value of 38.35. And every single person increase in population will result in a 0.08 increase in the mean Ozone AQI.
+\end{itemize}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{#Logistic Regression}
+\CommentTok{#Generalized linear model.}
+\NormalTok{LG <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"../Processed data/OzoneSummary1.csv"}\NormalTok{)}
+\KeywordTok{library}\NormalTok{(lme4)}
 \end{Highlighting}
 \end{Shaded}
+
+\begin{verbatim}
+## Loading required package: Matrix
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'Matrix'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:tidyr':
+## 
+##     expand
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Density =(population/square mile)}
+\CommentTok{#normaility -test : not normal}
+\KeywordTok{shapiro.test}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{Population)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Shapiro-Wilk normality test
+## 
+## data:  FLG$Population
+## W = 0.95153, p-value = 0.01467
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{shapiro.test}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{Income)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Shapiro-Wilk normality test
+## 
+## data:  FLG$Income
+## W = 0.90107, p-value = 9.929e-05
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{shapiro.test}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{Density)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Shapiro-Wilk normality test
+## 
+## data:  FLG$Density
+## W = 0.71204, p-value = 8.183e-10
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Normal}
+\KeywordTok{shapiro.test}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{MeanOzoneAQI)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Shapiro-Wilk normality test
+## 
+## data:  FLG$MeanOzoneAQI
+## W = 0.98676, p-value = 0.7344
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Counties as a mixed effect}
+\NormalTok{MLG <-}\StringTok{ }\NormalTok{LG }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{select}\NormalTok{(MeanOzoneAQI, Population, Income, Density,COUNTY) }
+\NormalTok{MLG}\OperatorTok{$}\NormalTok{Population <-}\StringTok{  }\KeywordTok{as.numeric}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{Population)}
+\NormalTok{MLG}\OperatorTok{$}\NormalTok{Income <-}\StringTok{  }\KeywordTok{as.numeric}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{Income)}
+\NormalTok{MLG}\OperatorTok{$}\NormalTok{Density <-}\StringTok{  }\KeywordTok{as.numeric}\NormalTok{(FLG}\OperatorTok{$}\NormalTok{Density)}
+
+\NormalTok{glm1 <-}\StringTok{ }\KeywordTok{lmer}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ MLG, MeanOzoneAQI }\OperatorTok{~}\NormalTok{Population }\OperatorTok{+}\StringTok{ }\NormalTok{Income }\OperatorTok{+}\StringTok{ }\NormalTok{Density}\OperatorTok{+}\NormalTok{(}\DecValTok{1}\OperatorTok{|}\NormalTok{COUNTY) )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: Some predictor variables are on very different scales: consider
+## rescaling
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{glm2 <-}\KeywordTok{lmer}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ MLG, MeanOzoneAQI }\OperatorTok{~}\NormalTok{Population }\OperatorTok{+}\StringTok{ }\NormalTok{(}\DecValTok{1}\OperatorTok{|}\NormalTok{COUNTY))}
+\KeywordTok{summary}\NormalTok{(glm1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: MeanOzoneAQI ~ Population + Income + Density + (1 | COUNTY)
+##    Data: MLG
+## 
+## REML criterion at convergence: 298
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -1.54194 -0.57372  0.07852  0.56102  1.59841 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  COUNTY   (Intercept) 6.483    2.546   
+##  Residual             1.223    1.106   
+## Number of obs: 63, groups:  COUNTY, 32
+## 
+## Fixed effects:
+##              Estimate Std. Error t value
+## (Intercept) 3.639e+01  2.955e+00  12.314
+## Population  9.986e-02  5.431e-02   1.839
+## Income      2.487e-05  6.501e-05   0.382
+## Density     1.251e-03  1.609e-03   0.778
+## 
+## Correlation of Fixed Effects:
+##            (Intr) Popltn Income
+## Population -0.366              
+## Income     -0.913  0.016       
+## Density     0.374  0.259 -0.620
+## fit warnings:
+## Some predictor variables are on very different scales: consider rescaling
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{AIC}\NormalTok{(glm1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 310.0305
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(glm2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: MeanOzoneAQI ~ Population + (1 | COUNTY)
+##    Data: MLG
+## 
+## REML criterion at convergence: 270.9
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -1.53118 -0.64085  0.06108  0.52879  1.53735 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  COUNTY   (Intercept) 6.447    2.539   
+##  Residual             1.222    1.105   
+## Number of obs: 63, groups:  COUNTY, 32
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept) 38.35664    0.96173  39.883
+## Population   0.07543    0.05088   1.483
+## 
+## Correlation of Fixed Effects:
+##            (Intr)
+## Population -0.872
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{AIC}\NormalTok{(glm2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 278.8938
+\end{verbatim}
+
+\begin{figure}
+\centering
+\includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 5-1.pdf}
+\caption{Residual Plot}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 4-1.pdf}
+\caption{Relationship Between Ozone AQI and Population}
+\end{figure}
 
 \newpage
 
