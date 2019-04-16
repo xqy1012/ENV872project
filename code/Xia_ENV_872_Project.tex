@@ -25,7 +25,7 @@
 \usepackage[margin=2.54cm]{geometry}
 \usepackage{hyperref}
 \hypersetup{unicode=true,
-            pdftitle={2017, 2018 Ozone in North Carolina},
+            pdftitle={Does Ozone Pollution in 2018 Worsened in North Carolina?},
             pdfauthor={Qianyi Xia},
             pdfborder={0 0 0},
             breaklinks=true}
@@ -116,7 +116,7 @@
 
 \setlength{\droptitle}{-2em}
 
-  \title{2017, 2018 Ozone in North Carolina}
+  \title{Does Ozone Pollution in 2018 Worsened in North Carolina?}
     \pretitle{\vspace{\droptitle}\centering\huge}
   \posttitle{\par}
   \subtitle{\url{https://github.com/xqy1012/ENV872project}}
@@ -130,7 +130,14 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Experimental overview. This section should be no longer than 250 words.
+There is an online news report arguing that in year 2018, the ozone air
+pollution has worsened compare to the status in 2017. However, this is
+not the truth. Analysis in this report will start with data exploration
+and data wrangling. Then in the analysis section, evidence on why this
+viewpoint is not accurate will be provided. Further, the report will
+investigate other information on ozone pollution situation in 2017 and
+2018, including the yearly trend of ozone in summer and in winter, and
+the influence of population size on Ozone pollution level.
 \end{abstract}
 
 \newpage
@@ -151,6 +158,11 @@ Rationale}\label{research-question-and-rationale}
 \newpage
 
 \section{Dataset Information}\label{dataset-information}
+
+\begin{itemize}
+\item[]The Ozone pollution data for 2017 and 2018 North Carolina were prepared by professor Kateri Salk. She collected the data from North Temperate Lakes Long Term Ecological Research website and EPA government outdoor air quality data with the Download Daily Data tool. The raw data includes content: Date: month/day/year, Source: AQS (Air Quality System) or AirNow, Site ID: A unique number within the county identifying the site, POC: "Parameter Occurrence Code" used to distinguish different instruments that measure the same parameter at the same site, Daily Mean PM2.5 Concentration: numeric value, Daily Max 8-hour, Ozone Concentration: numeric value, Units: ppm for the concentration, and Daily AQI VALUE: Air quality index (range 0-500), Site Name, DAILY OBS COUNT: number of observations per day, PERCENTCOMPLETE, AQSPARAMETERCODE, AQS PARAMETER DESC,CBSA CODE, CBSA NAME, STATE CODE, STATE, COUNTY CODE, COUNTY, SITE LATITUDE,SITE LONGITUDE
+\item[]The demographic data for different counties corresponding to the counties in Ozone data was collected from United States Census Bureau Demographic Data 'https://www.census.gov/quickfacts'. Sections including population size, population density, and Median household income are searched for the corresponding counties listed in Ozone dataset. The numbers were manually collected.
+\end{itemize}
 
 \newpage
 
@@ -526,7 +538,7 @@ maxOzoneAQI\tabularnewline
 
 \section{Analysis}\label{analysis}
 
-\subsection{4.1}\label{section}
+\subsection{Wilcoxon Test}\label{wilcoxon-test}
 
 \begin{itemize}
 \item[] First analysis is the Wilcoxon test to test if ozone AQI in 2017 is lower than 2018. Wilcoxon test is conducted since the data are non-parametric data, which means not normally distributed. T-test or ANOVA test cannot be used here. Both the difference for yearly mean and monthly difference are tested. One interesting finding before conducting the test is that the 2017 AQI mean is actually higher than the 2018 AQI, so the null hypothesis is adjusted as follow:  
@@ -879,7 +891,8 @@ maxOzoneAQI\tabularnewline
 \includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 1-1.pdf}
 \pagebreak
 
-\subsection{4.2}\label{section-1}
+\subsection{Mann-Kenndall \& Pettitt's
+test}\label{mann-kenndall-pettitts-test}
 
 \begin{itemize}
 \item[]The second main analysis employs the Mann-kenndal test to determine whether there is a monotonic trend combining with Pettitt's test which find the shift point in the central tendency of time series. Weather is especially favorable for ozone formation when it is hot, dry and sunny. The two tests help to understand how ozone pollution level fluctuated through a yearly time period in 2017 and 2018.
@@ -887,7 +900,7 @@ maxOzoneAQI\tabularnewline
 \item[]Ha: There is a trend exist.\
  In 2017, two significant change points are detected, one is on August 6th (p < 0.001), another is on October 7th (p<0.001). There is a significant positive trend from start of the year to August 6th (z = 4.65, p < 0.001), and a significant negative general trend from August 6th to the end of year (z = -4.24, p <0.001). There is also a suggestive slight positive trend from August 6th to October 7th (z = 1.80, p = 0.07), and a non-significant negative trend after October 7th (z =-1.16, p = 0.24).
 \item[]In 2018, there are three significant change points are detected, on July 29th (p < 0.001), on September 9th (p<0.001), and on October 7th (p = 0.002). There is a significant positive trend from start of the year to July 29th (z = 5.66, p < 0.001), and a significant negative general trend from July 29th to the end of year (z = -3.85, p <0.001). There is also a non-significant positive trend from July 29th to September 9th (z = 1.36, p = 0.17), a significant positive trend from September 9th to October 7th (p = 0.007), a significant negative trend after October 7th (z =- 2.28, p = 0.02).
-\item[]Both the result and the figure show that the trends of ozone level fluctuate are similar in 2017 and 2018. There are change points in summer/ fall in both years and the change point is on the exact same date on October 7th. And there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year).
+\item[]Both the result and the figure 6 and figure 7 show that the trends of ozone level fluctuate are similar in 2017 and 2018. There are change points in summer/ fall in both years and the change point is on the exact same date on October 7th. And there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year).
 \end{itemize}
 
 \begin{Shaded}
@@ -1207,21 +1220,33 @@ maxOzoneAQI\tabularnewline
 
 \pagebreak
 
+\begin{figure}
+\centering
 \includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 2-1.pdf}
+\caption{2017 ozone trend}
+\end{figure}
+
 \pagebreak
 
+\begin{figure}
+\centering
 \includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 3-1.pdf}
+\caption{2018 ozone trend}
+\end{figure}
+
 \pagebreak
 
-\subsection{4.3}\label{section-2}
+\subsection{Generalized Linear Model}\label{generalized-linear-model}
 
 \begin{itemize}
-\item[]The third analysis is the generalized linear model to test whether population, density, or income is correlated with Ozone AQI level. Random effect for county is included in the model.
-\item[]H0: There is no significant correlation for all the variables, all the coefficients are zero. 
-\item[]Ha: At least one variable is significant.
-\item[]After testing the data, I found out that only the mean AQI value (p-value = 0.73) passed the Shapiro-Wilk normality test. Other variables are not normally distributed. The initial model established included all the variables, and then based on the AIC score, best fit model is selected which is MeanOzoneAQI  ~ Population (P = 0.07). Due to a small sample size, a p value of 0.07 is considered to be suggestive significant. The diagnostic residual plot shows that the residuals are evenly distributed above and below the center, so there is no skew problem.
-\item[]From the result, our final model is: Mean Ozone AQI = 38.35 + 0.08 x Population. The intercept is 38.35, which means that when population is 0, there will be a mean AQI Ozone value of 38.35. And every single person increase in population will result in a 0.08 increase in the mean Ozone AQI.
+\item[]The third analysis is the generalized linear model to test whether population, density, or income is correlated with Ozone AQI level. Random effect for county is included in the model.\
+H0: There is no significant correlation for all the variables, all the coefficients are zero. 
+Ha: At least one variable is significant.\
+\item[]After testing the data, I found out that only the mean AQI value (p-value = 0.73) passed the Shapiro-Wilk normality test. Other variables are not normally distributed. The initial model established included all the variables, and then based on the AIC score, best fit model is selected which is MeanOzoneAQI  ~ Population (P = 0.07). Due to a small sample size, a p value of 0.07 is considered to be suggestive significant. The diagnostic residual plot in Figure 8 shows that the residuals are evenly distributed above and below the center, so there is no skew problem.
+\item[]From the result, our final model is: Mean Ozone AQI = 38.35 + 0.08 x Population. The intercept is 38.35, which means that when population is 0, there will be a mean AQI Ozone value of 38.35. And every single person increase in population will result in a 0.08 increase in the mean Ozone AQI. And the correlation is shown in Figure 9.
 \end{itemize}
+
+\pagebreak
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1416,11 +1441,15 @@ maxOzoneAQI\tabularnewline
 ## [1] 278.8938
 \end{verbatim}
 
+\pagebreak
+
 \begin{figure}
 \centering
 \includegraphics{Xia_ENV_872_Project_files/figure-latex/Final visualization 5-1.pdf}
 \caption{Residual Plot}
 \end{figure}
+
+\pagebreak
 
 \begin{figure}
 \centering
@@ -1434,9 +1463,9 @@ maxOzoneAQI\tabularnewline
 
 \begin{itemize}
 \item[]Based on the analysis above, we can conclude that: 
-\item[]1. 2018 does not have a worsened ozone pollution compare to 2017. And moreover, in February, May, August, September, October, November, December, there was a higher ozone concentration in most months in 2017 than 2018. Therefore, it is not accurate for American Lung Association to report a worsened ozone pollution in 2018. The implication we obtain from this is that, to become scientists, we should have critical thoughts on the news we see every day and confirm/deny the truth by ourselves will be interesting.
-\item[]2. There are trends patterns for Ozone AQI level within a yearly period both in 2017 and 2018. The patterns are similar in these two years where there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year). This result is consistent with the fact that weather may affect the ozone formation, and ozone pollution tends to be higher when it is hot, dry and sunny without much wind.
-\item[]3. Population size affects Ozone AQI level, population density or income does not affect Ozone AQI level. In our data, the association between Ozone AQI and population size is:   
+1.  2018 does not have a worsened ozone pollution compare to 2017. And moreover, in February, May, August, September, October, November, December, there was a higher ozone concentration in most months in 2017 than 2018. Therefore, it is not accurate for American Lung Association to report a worsened ozone pollution in 2018. The implication we obtain from this is that, to become scientists, we should have critical thoughts on the news we see every day and confirm/deny the truth by ourselves will be interesting.  \
+2.  There are trends patterns for Ozone AQI level within a yearly period both in 2017 and 2018. The patterns are similar in these two years where there are positive trends in first half of year (from winter to summer) and negative trends in the later part of year (from summer/fall to the following winter in end of year). This result is consistent with the fact that weather may affect the ozone formation, and ozone pollution tends to be higher when it is hot, dry and sunny without much wind.  \
+3.  Population size affects Ozone AQI level, population density or income does not affect Ozone AQI level. In our data, the association between Ozone AQI and population size is:   
 Mean Ozone AQI = 38.35 + 0.08 x Population  
 Therefore, in a city/community with a larger population size, the ozone pollution may be worse than a low population area. People who live in a large and sunny city should pay more attention to their ozone pollution.
 \end{itemize}
